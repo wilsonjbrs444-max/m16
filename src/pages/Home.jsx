@@ -3,12 +3,6 @@ import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabase.js'
 import { Carousel, ProductCard } from '../components.jsx'
 
-const STEPS = [
-  ['Choisissez', 'Parcourez les catégories ou utilisez la recherche.'],
-  ['Ajoutez au panier', 'Vérifiez vos articles et les quantités dans le panier.'],
-  ['Payez par Mobile Money', 'Validez votre commande, puis suivez-la depuis votre profil.'],
-]
-
 export default function Home() {
   const [params, setParams] = useSearchParams()
   const q = params.get('q') || ''
@@ -39,13 +33,6 @@ export default function Home() {
       <section className="welcome"><h1>Votre matériel IT, au meilleur prix.</h1>
         <p>Ordinateurs, composants, périphériques et accessoires pour vos études et vos projets.</p></section>
     )}
-    <div className="trust">
-      <div><b>Paiement Mobile Money</b>MTN MoMo, Orange Money</div>
-      <div><b>Livraison au Cameroun</b>Suivi de commande</div>
-      <div><b>Garantie affichée</b>Sur chaque produit</div>
-      <div><b>Aide sur WhatsApp</b>Une vraie personne répond</div>
-    </div>
-
     <div className="chips" role="tablist" aria-label="Catégories">
       <button className={'chip' + (!cat ? ' on' : '')} onClick={() => setParam('cat', '')}>Tout</button>
       {cats.map(c => <button key={c.id} className={'chip' + (cat === String(c.id) ? ' on' : '')} onClick={() => setParam('cat', String(c.id))}>{c.name}</button>)}
@@ -66,8 +53,5 @@ export default function Home() {
       </div>
     ) : <div className="grid">{shown.map(p => <ProductCard key={p.id} p={p} />)}</div>}
 
-    <section className="steps" aria-label="Comment commander">
-      {STEPS.map(([t, d], i) => <div className="step" key={t}><i>{i + 1}</i><b>{t}</b><p className="muted">{d}</p></div>)}
-    </section>
   </>)
 }

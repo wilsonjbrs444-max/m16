@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase, fcfa, cover } from '../supabase.js'
+import { supabase, fcfa, cover, waNumber } from '../supabase.js'
 
 // Réduit les photos (téléphone = plusieurs Mo) pour un site rapide.
 async function compress(file, max = 1400) {
@@ -128,7 +128,7 @@ function Products() {
   </>)
 }
 
-const emptyB = { title: '', subtitle: '', product_id: '', position: 0, active: true }
+const emptyB = { title: '', subtitle: '', product_id: '', position: 0, active: true, show_text: true }
 
 function Banners() {
   const [list, setList] = useState([])
@@ -157,7 +157,7 @@ function Banners() {
       let image_url = editing?.image_url ?? null
       if (file) image_url = await upload(file)
       if (!image_url) throw new Error('Ajoutez une image pour la bannière.')
-      const row = { title: form.title, subtitle: form.subtitle || null, product_id: form.product_id || null, position: Number(form.position), active: form.active, image_url }
+      const row = { title: form.title, subtitle: form.subtitle || null, product_id: form.product_id || null, position: Number(form.position), active: form.active, show_text: form.show_text, image_url }
       const { error } = editing
         ? await supabase.from('banners').update(row).eq('id', editing.id)
         : await supabase.from('banners').insert(row)
@@ -168,7 +168,7 @@ function Banners() {
   }
   function edit(b) {
     setEditing(b); setFile(null); setMsg('')
-    setForm({ title: b.title, subtitle: b.subtitle ?? '', product_id: b.product_id ?? '', position: b.position, active: b.active })
+    setForm({ title: b.title, subtitle: b.subtitle ?? '', product_id: b.product_id ?? '', position: b.position, active: b.active, show_text: b.show_text !== false })
     window.scrollTo(0, 0)
   }
   async function remove(b) {
@@ -180,7 +180,7 @@ function Banners() {
   return (<>
     <form className="panel" onSubmit={save}>
       <h2>{editing ? 'Modifier la bannière' : 'Nouvelle bannière'}</h2>
-      <label>Titre<input value={form.title} onChange={set('title')} required /></label>
+      <label>Titre (nom de la bannière)<input value={form.title} onChange={set('title')} required /></label>
       <label>Sous-titre (optionnel)<input value={form.subtitle} onChange={set('subtitle')} /></label>
       <label>Produit à ouvrir au clic<select value={form.product_id} onChange={set('product_id')}>
         <option value="">Aucun lien</option>{prods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
@@ -190,6 +190,7 @@ function Banners() {
       <div className="row">
         <label>Ordre d’affichage<input type="number" value={form.position} onChange={set('position')} /></label>
         <label className="check"><input type="checkbox" checked={form.active} onChange={set('active')} /> Affichée</label>
+        <label className="check"><input type="checkbox" checked={form.show_text} onChange={set('show_text')} /> Écrire le titre sur l’image</label>
       </div>
       {msg && <p className="msg">{msg}</p>}
       <div className="row">
@@ -209,6 +210,27 @@ function Banners() {
   </>)
 }
 
+function Settings() {
+  const [wa, setWa] = useState('')
+  const [msg, setMsg] = useState('')
+  useEffect(() => { supabase.from('site_settings').select('value').eq('key', 'whatsapp').maybeSingle().then(({ data }) => setWa(data?.value ?? '')) }, [])
+  async function save(e) {
+    e.preventDefault(); setMsg('')
+    const { error } = await supabase.from('site_settings').upsert({ key: 'whatsapp', value: waNumber(wa) })
+    if (!error) window.dispatchEvent(new Event('wa-changed'))
+    setMsg(error ? error.message : 'Numéro enregistré.')
+  }
+  return (
+    <form className="panel" onSubmit={save}>
+      <h2>Contact WhatsApp</h2>
+      <label>Ton numéro WhatsApp (ex. 6XX XX XX XX)<input type="tel" value={wa} onChange={e => setWa(e.target.value)} /></label>
+      <p className="muted">Le bouton WhatsApp du site et celui des fiches produit ouvriront une conversation avec ce numéro. Laisse vide pour les masquer.</p>
+      {msg && <p className="msg">{msg}</p>}
+      <button className="btn">Enregistrer</button>
+    </form>
+  )
+}
+
 export default function Admin() {
   const [tab, setTab] = useState('articles')
   return (<>
@@ -216,7 +238,8 @@ export default function Admin() {
     <div className="tabs">
       <button className={tab === 'articles' ? 'on' : ''} onClick={() => setTab('articles')}>Articles</button>
       <button className={tab === 'bannieres' ? 'on' : ''} onClick={() => setTab('bannieres')}>Bannières</button>
+      <button className={tab === 'reglages' ? 'on' : ''} onClick={() => setTab('reglages')}>Réglages</button>
     </div>
-    {tab === 'articles' ? <Products /> : <Banners />}
+    {tab === 'articles' ? <Products /> : tab === 'bannieres' ? <Banners /> : <Settings />}
   </>)
 }

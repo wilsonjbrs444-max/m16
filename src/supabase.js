@@ -8,3 +8,4 @@ export const supabase = configOk ? createClient(url, key) : null
 export const fcfa = n => new Intl.NumberFormat('fr-FR').format(n) + ' FCFA'
 export const cover = p => p.images?.[0] || p.image_url || null
 export const discount = p => (p.old_price && p.old_price > p.price ? Math.round((1 - p.price / p.old_price) * 100) : 0)
+export const waNumber = raw => { const d = (raw || '').replace(/\D/g, ''); return d.length === 9 ? '237' + d : d }

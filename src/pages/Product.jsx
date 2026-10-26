@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { supabase, fcfa, discount } from '../supabase.js'
+import { supabase, fcfa, discount, waNumber } from '../supabase.js'
 import { useCart } from '../cart.jsx'
+import { useWhatsApp } from '../components.jsx'
 
 export default function Product() {
   const { id } = useParams()
@@ -11,6 +12,7 @@ export default function Product() {
   const [k, setK] = useState(0)
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
+  const wa = waNumber(useWhatsApp())
 
   useEffect(() => {
     setK(0); setQty(1); setAdded(false)
@@ -56,6 +58,10 @@ export default function Product() {
           <button className="btn o" disabled={out} onClick={() => { add(p, qty); nav('/panier') }}>Acheter maintenant</button>
         </div>
         {added && <p className="msg">Article ajouté. <Link to="/panier"><u>Voir mon panier</u></Link></p>}
+        {wa && p && (
+          <a className="btn wa" href={`https://wa.me/${wa}?text=${encodeURIComponent(`Bonjour, je suis intéressé par « ${p.name} » (${fcfa(p.price)}). ${window.location.href}`)}`}
+            target="_blank" rel="noopener noreferrer">Poser une question sur WhatsApp</a>
+        )}
         <ul className="perks">
           <li>Paiement par Mobile Money</li>
           <li>Livraison partout au Cameroun</li>

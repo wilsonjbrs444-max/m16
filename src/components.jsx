@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
 import { useCart } from './cart.jsx'
-import { cover, discount, fcfa } from './supabase.js'
+import { cover, discount, fcfa, supabase, waNumber } from './supabase.js'
 
 const P = {
   cart: 'M3 4h2l2.5 11h11L21 7H6M9 20h.01M18 20h.01',
   user: 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0',
   search: 'M11 18a7 7 0 100-14 7 7 0 000 14zM20 20l-4-4',
+  home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',
+  chat: 'M7.9 20A9 9 0 104 16.1L2 22z',
 }
 export const Icon = ({ n, s = 22 }) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={P[n]} /></svg>
@@ -36,6 +38,7 @@ export function Navbar() {
         <button aria-label="Lancer la recherche"><Icon n="search" s={20} /></button>
       </form>
       <div className="acts">
+        <Link to="/" className="ib" aria-label="Accueil"><Icon n="home" /></Link>
         <Link to="/panier" className="ib" aria-label={`Panier, ${count} article${count > 1 ? 's' : ''}`}>
           <Icon n="cart" />{count > 0 && <em>{count}</em>}
         </Link>
@@ -75,11 +78,13 @@ export function Carousel({ banners }) {
             tabIndex={b.product_id ? 0 : undefined} onKeyDown={e => e.key === 'Enter' && go(b)}
             style={{ cursor: b.product_id ? 'pointer' : 'default' }}>
             {b.image_url && <img src={b.image_url} alt="" />}
-            <div className="cap">
-              <h2>{b.title}</h2>
-              {b.subtitle && <p>{b.subtitle}</p>}
-              {b.product_id && <span className="btn sm light">Voir le produit</span>}
-            </div>
+            {b.show_text !== false && (
+              <div className="cap">
+                <h2>{b.title}</h2>
+                {b.subtitle && <p>{b.subtitle}</p>}
+                {b.product_id && <span className="btn sm light">Voir le produit</span>}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -117,11 +122,34 @@ export function ProductCard({ p }) {
   )
 }
 
+export function useWhatsApp() {
+  const [n, setN] = useState('')
+  useEffect(() => {
+    const load = () => supabase.from('site_settings').select('value').eq('key', 'whatsapp').maybeSingle().then(({ data }) => setN(data?.value ?? ''))
+    load()
+    window.addEventListener('wa-changed', load)
+    return () => window.removeEventListener('wa-changed', load)
+  }, [])
+  return n
+}
+
+export function WhatsAppFab() {
+  const wa = waNumber(useWhatsApp())
+  const { pathname } = useLocation()
+  if (!wa || pathname.startsWith('/admin')) return null
+  return (
+    <a className="fab" href={`https://wa.me/${wa}?text=${encodeURIComponent('Bonjour M16 IT, j’ai une question.')}`}
+      target="_blank" rel="noopener noreferrer" aria-label="Écrire sur WhatsApp"><Icon n="chat" s={26} /></a>
+  )
+}
+
 export function Footer() {
+  const wa = waNumber(useWhatsApp())
   return (
     <footer className="foot"><div className="wrap">
       <b>M16 <span>IT</span></b>
       <p>Matériel informatique pour les étudiants et les professionnels de l’IT. Paiement par Mobile Money, livraison au Cameroun.</p>
+      {wa && <a className="btn wa sm" href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer">Nous écrire sur WhatsApp</a>}
     </div></footer>
   )
 }

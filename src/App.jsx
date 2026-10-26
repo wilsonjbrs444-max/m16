@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
-import { Footer, Navbar } from './components.jsx'
+import { Footer, Navbar, WhatsAppFab } from './components.jsx'
 import Home from './pages/Home.jsx'
 import Product from './pages/Product.jsx'
 import Cart from './pages/Cart.jsx'
@@ -33,5 +33,6 @@ export default function App() {
       </Routes>
     </main>
     <Footer />
+    <WhatsAppFab />
   </>)
 }

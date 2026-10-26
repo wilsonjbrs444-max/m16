@@ -1,6 +1,11 @@
-import { Link, Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
+import { Footer, Navbar } from './components.jsx'
 import Home from './pages/Home.jsx'
+import Product from './pages/Product.jsx'
+import Cart from './pages/Cart.jsx'
+import Profile from './pages/Profile.jsx'
 import Login from './pages/Login.jsx'
 import Admin from './pages/Admin.jsx'
 
@@ -12,23 +17,21 @@ function RequireAdmin({ children }) {
 }
 
 export default function App() {
-  const { user, isAdmin, signOut } = useAuth()
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
   return (<>
-    <header className="top"><div className="wrap bar">
-      <Link to="/" className="brand">M16 <span>IT</span></Link>
-      <nav>
-        <Link to="/">Boutique</Link>
-        {isAdmin && <Link to="/admin">Administration</Link>}
-        {user ? <button onClick={signOut}>Déconnexion</button> : <Link to="/login">Connexion</Link>}
-      </nav>
-    </div></header>
+    <Navbar />
     <main className="wrap">
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/produit/:id" element={<Product />} />
+        <Route path="/panier" element={<Cart />} />
+        <Route path="/profil" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </main>
+    <Footer />
   </>)
 }

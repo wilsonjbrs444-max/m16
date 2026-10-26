@@ -1,31 +1,73 @@
 import { useEffect, useState } from 'react'
-import { supabase, fcfa } from '../supabase.js'
+import { useSearchParams } from 'react-router-dom'
+import { supabase } from '../supabase.js'
+import { Carousel, ProductCard } from '../components.jsx'
+
+const STEPS = [
+  ['Choisissez', 'Parcourez les catégories ou utilisez la recherche.'],
+  ['Ajoutez au panier', 'Vérifiez vos articles et les quantités dans le panier.'],
+  ['Payez par Mobile Money', 'Validez votre commande, puis suivez-la depuis votre profil.'],
+]
 
 export default function Home() {
-  const [items, setItems] = useState(null)
+  const [params, setParams] = useSearchParams()
+  const q = params.get('q') || ''
+  const cat = params.get('cat') || ''
+  const tri = params.get('tri') || ''
+  const [products, setProducts] = useState(null)
+  const [cats, setCats] = useState([])
+  const [banners, setBanners] = useState([])
   const [error, setError] = useState('')
 
   useEffect(() => {
+    supabase.from('categories').select('*').order('name').then(({ data }) => setCats(data ?? []))
+    supabase.from('banners').select('*').eq('active', true).order('position').then(({ data }) => setBanners(data ?? []))
     supabase.from('products').select('*').eq('active', true).order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) setError(error.message)
-        setItems(data ?? [])
-      })
+      .then(({ data, error }) => { if (error) setError(error.message); setProducts(data ?? []) })
   }, [])
 
-  if (!items) return <p className="center">Chargement…</p>
+  const setParam = (k, v) => { const n = new URLSearchParams(params); v ? n.set(k, v) : n.delete(k); setParams(n) }
+  if (!products) return <p className="center">Chargement…</p>
+
+  const s = q.toLowerCase()
+  const shown = products
+    .filter(p => (!cat || String(p.category_id) === cat) && (!s || `${p.name} ${p.specs ?? ''} ${p.description ?? ''}`.toLowerCase().includes(s)))
+    .sort((a, b) => (tri === 'asc' ? a.price - b.price : tri === 'desc' ? b.price - a.price : 0))
+
   return (<>
-    <h1>Matériel informatique</h1>
-    {error && <p className="msg">Impossible de charger les articles : {error}</p>}
-    {!error && items.length === 0 && <p className="muted">Aucun article pour l’instant. Ajoutez-en depuis l’espace Administration.</p>}
-    <div className="grid">{items.map(p => (
-      <article className="card" key={p.id}>
-        {p.badge && <span className="tag">{p.badge}</span>}
-        {p.image_url && <img src={p.image_url} alt={p.name} />}
-        <h3>{p.name}</h3>
-        <p className="muted">{p.specs}</p>
-        <div><b>{fcfa(p.price)}</b>{p.old_price && <s>{fcfa(p.old_price)}</s>}</div>
-      </article>))}
+    {banners.length > 0 ? <Carousel banners={banners} /> : (
+      <section className="welcome"><h1>Votre matériel IT, au meilleur prix.</h1>
+        <p>Ordinateurs, composants, périphériques et accessoires pour vos études et vos projets.</p></section>
+    )}
+    <div className="trust">
+      <div><b>Paiement Mobile Money</b>MTN MoMo, Orange Money</div>
+      <div><b>Livraison au Cameroun</b>Suivi de commande</div>
+      <div><b>Garantie affichée</b>Sur chaque produit</div>
+      <div><b>Aide sur WhatsApp</b>Une vraie personne répond</div>
     </div>
+
+    <div className="chips" role="tablist" aria-label="Catégories">
+      <button className={'chip' + (!cat ? ' on' : '')} onClick={() => setParam('cat', '')}>Tout</button>
+      {cats.map(c => <button key={c.id} className={'chip' + (cat === String(c.id) ? ' on' : '')} onClick={() => setParam('cat', String(c.id))}>{c.name}</button>)}
+    </div>
+
+    <div className="bar2">
+      <h2>{q ? `Résultats pour « ${q} »` : 'Nos produits'} <span className="muted">({shown.length})</span></h2>
+      <select value={tri} onChange={e => setParam('tri', e.target.value)} aria-label="Trier">
+        <option value="">Nouveautés</option><option value="asc">Prix croissant</option><option value="desc">Prix décroissant</option>
+      </select>
+    </div>
+
+    {error && <p className="msg">Impossible de charger les articles : {error}</p>}
+    {shown.length === 0 && !error ? (
+      <div className="center">
+        <p>{products.length === 0 ? 'Aucun article pour l’instant. Revenez bientôt !' : 'Aucun produit ne correspond à votre recherche.'}</p>
+        {products.length > 0 && <button className="btn o" onClick={() => setParams({})}>Réinitialiser les filtres</button>}
+      </div>
+    ) : <div className="grid">{shown.map(p => <ProductCard key={p.id} p={p} />)}</div>}
+
+    <section className="steps" aria-label="Comment commander">
+      {STEPS.map(([t, d], i) => <div className="step" key={t}><i>{i + 1}</i><b>{t}</b><p className="muted">{d}</p></div>)}
+    </section>
   </>)
 }

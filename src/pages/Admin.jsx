@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase, fcfa, cover, waNumber } from '../supabase.js'
+import { supabase, fcfa, cover, waNumber, orderNo } from '../supabase.js'
 
 // Réduit les photos (téléphone = plusieurs Mo) pour un site rapide.
 async function compress(file, max = 1400) {
@@ -231,6 +231,37 @@ function Settings() {
   )
 }
 
+const STATUSES = ['En attente', 'Payée', 'Expédiée', 'Livrée', 'Annulée']
+
+function AdminOrders() {
+  const [list, setList] = useState([])
+  const [msg, setMsg] = useState('')
+  const load = () => supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).then(({ data }) => setList(data ?? []))
+  useEffect(() => { load() }, [])
+  async function setStatus(o, status) {
+    const { error } = await supabase.from('orders').update({ status }).eq('id', o.id)
+    if (error) setMsg(error.message); else { setMsg(''); load() }
+  }
+  return (<>
+    <h2>Commandes ({list.length})</h2>
+    {msg && <p className="msg">{msg}</p>}
+    {list.length === 0 && <p className="muted">Aucune commande pour l’instant.</p>}
+    <div className="list">{list.map(o => (
+      <div className="ord" key={o.id}>
+        <div className="top2"><b>{orderNo(o.number)}</b><span className="muted">{new Date(o.created_at).toLocaleString('fr-FR')}</span></div>
+        <div>{o.customer_name} · <a href={`tel:${o.phone}`}><u>{o.phone}</u></a></div>
+        <div className="muted">{o.address} · {o.payment_method}</div>
+        <ul className="lines">{o.order_items.map(i => <li key={i.id}>{i.qty} × {i.name}</li>)}</ul>
+        <div className="row" style={{ alignItems: 'center' }}>
+          <b>{fcfa(o.total)}</b>
+          <select value={o.status} onChange={e => setStatus(o, e.target.value)} aria-label="Statut de la commande">
+            {STATUSES.map(s => <option key={s}>{s}</option>)}</select>
+        </div>
+      </div>))}
+    </div>
+  </>)
+}
+
 export default function Admin() {
   const [tab, setTab] = useState('articles')
   return (<>
@@ -238,8 +269,9 @@ export default function Admin() {
     <div className="tabs">
       <button className={tab === 'articles' ? 'on' : ''} onClick={() => setTab('articles')}>Articles</button>
       <button className={tab === 'bannieres' ? 'on' : ''} onClick={() => setTab('bannieres')}>Bannières</button>
+      <button className={tab === 'commandes' ? 'on' : ''} onClick={() => setTab('commandes')}>Commandes</button>
       <button className={tab === 'reglages' ? 'on' : ''} onClick={() => setTab('reglages')}>Réglages</button>
     </div>
-    {tab === 'articles' ? <Products /> : tab === 'bannieres' ? <Banners /> : <Settings />}
+    {tab === 'articles' ? <Products /> : tab === 'bannieres' ? <Banners /> : tab === 'commandes' ? <AdminOrders /> : <Settings />}
   </>)
 }

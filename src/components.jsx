@@ -48,6 +48,7 @@ export function Navbar() {
             {open && (
               <div className="drop">
                 <Link to="/profil" onClick={() => setOpen(false)}>Mon profil</Link>
+                <Link to="/commandes" onClick={() => setOpen(false)}>Mes commandes</Link>
                 <Link to="/panier" onClick={() => setOpen(false)}>Mon panier</Link>
                 {isAdmin && <Link to="/admin" onClick={() => setOpen(false)}>Administration</Link>}
                 <button onClick={out}>Se déconnecter</button>

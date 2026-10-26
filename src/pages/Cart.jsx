@@ -35,10 +35,10 @@ export default function Cart() {
       <aside className="sum">
         <h2>Récapitulatif</h2>
         <div className="row2"><span>Sous-total</span><b>{fcfa(total)}</b></div>
-        <div className="row2"><span>Livraison</span><span className="muted">calculée à la commande</span></div>
+        <div className="row2"><span>Livraison</span><span className="muted">confirmée avec vous</span></div>
         <div className="row2 big"><span>Total</span><b>{fcfa(total)}</b></div>
-        <button className="btn" disabled style={{ width: '100%' }}>Passer la commande</button>
-        <p className="muted">Le paiement simulé et le suivi des commandes arrivent à la prochaine étape.</p>
+        <Link className="btn" to="/commande" style={{ width: '100%' }}>Passer la commande</Link>
+        <p className="muted" style={{ marginTop: 10 }}>Paiement par Mobile Money, à la livraison ou via WhatsApp.</p>
       </aside>
     </div>
   </>)

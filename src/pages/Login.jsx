@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase.js'
 
 export default function Login() {
   const nav = useNavigate()
+  const loc = useLocation()
   const [mode, setMode] = useState('login')
   const [f, setF] = useState({ email: '', password: '', name: '' })
   const [msg, setMsg] = useState('')
@@ -16,7 +17,7 @@ export default function Login() {
       : await supabase.auth.signUp({ email: f.email, password: f.password, options: { data: { full_name: f.name } } })
     if (error) return setMsg(error.message)
     if (mode === 'signup' && !data.session) return setMsg('Compte créé. Confirmez votre e-mail, puis connectez-vous.')
-    nav('/')
+    nav(loc.state?.from || '/')
   }
   return (
     <form className="panel" onSubmit={submit}>

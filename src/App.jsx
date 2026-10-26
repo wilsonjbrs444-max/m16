@@ -7,6 +7,9 @@ import Product from './pages/Product.jsx'
 import Cart from './pages/Cart.jsx'
 import Profile from './pages/Profile.jsx'
 import Login from './pages/Login.jsx'
+import Checkout from './pages/Checkout.jsx'
+import Order from './pages/Order.jsx'
+import Orders from './pages/Orders.jsx'
 import Admin from './pages/Admin.jsx'
 
 // Confort d'affichage uniquement : la vraie protection est dans les règles RLS de la base.
@@ -27,6 +30,9 @@ export default function App() {
         <Route path="/produit/:id" element={<Product />} />
         <Route path="/panier" element={<Cart />} />
         <Route path="/profil" element={<Profile />} />
+        <Route path="/commande" element={<Checkout />} />
+        <Route path="/commande/:id" element={<Order />} />
+        <Route path="/commandes" element={<Orders />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
         <Route path="*" element={<Navigate to="/" replace />} />
